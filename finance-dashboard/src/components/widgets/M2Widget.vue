@@ -37,12 +37,23 @@ const chartUrl = computed(() => {
     </div>
 
     <div class="iframe-container">
-      <iframe :src="chartUrl" height="300" width="600" frameborder="0" scrolling="no" :key="chartUrl"></iframe>
+      <iframe
+        :src="chartUrl"
+        height="300"
+        width="600"
+        frameborder="0"
+        scrolling="no"
+        :key="chartUrl"
+      ></iframe>
     </div>
 
     <p class="source">
       source:
-      <a href="https://jp.tradingeconomics.com/japan/money-supply-m2" target="_blank" rel="noopener noreferrer">
+      <a
+        href="https://jp.tradingeconomics.com/japan/money-supply-m2"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         tradingeconomics.com
       </a>
     </p>

@@ -27,7 +27,9 @@ onMounted(async () => {
 
 <template>
   <div class="callback-page">
-    <Message v-if="error" severity="error"> 認証に失敗しました。もう一度ログインしてください。 </Message>
+    <Message v-if="error" severity="error">
+      認証に失敗しました。もう一度ログインしてください。
+    </Message>
     <div v-else class="loading">
       <ProgressSpinner />
       <p>認証処理中...</p>

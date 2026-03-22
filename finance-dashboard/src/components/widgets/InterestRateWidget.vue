@@ -109,7 +109,14 @@ onBeforeUnmount(() => {
   <div class="interest-rate-widget">
     <div class="widget-header">
       <h3>政策金利・長期金利</h3>
-      <Button icon="pi pi-refresh" severity="secondary" text rounded :loading="loading" @click="fetchData" />
+      <Button
+        icon="pi pi-refresh"
+        severity="secondary"
+        text
+        rounded
+        :loading="loading"
+        @click="fetchData"
+      />
     </div>
 
     <Message v-if="errorMessage" severity="error" :closable="false">{{ errorMessage }}</Message>

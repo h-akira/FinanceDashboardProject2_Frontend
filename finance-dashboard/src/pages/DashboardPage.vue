@@ -17,12 +17,22 @@ interface ChartEntry {
 }
 
 const availableCharts = ref<ChartEntry[]>([
-  { id: 'market-summary', label: 'マーケット概況', component: shallowRef(MarketSummaryWidget), visible: true },
+  {
+    id: 'market-summary',
+    label: 'マーケット概況',
+    component: shallowRef(MarketSummaryWidget),
+    visible: true,
+  },
   { id: 'calendar', label: '経済カレンダー', component: shallowRef(CalendarWidget), visible: true },
   { id: 'exchange', label: 'FX チャート', component: shallowRef(ExchangeWidget), visible: true },
   { id: 'jp225', label: '日経225', component: shallowRef(JP225Widget), visible: true },
   { id: 'm2', label: 'マネーサプライ M2', component: shallowRef(M2Widget), visible: true },
-  { id: 'interest-rate', label: '政策金利・長期金利', component: shallowRef(InterestRateWidget), visible: true },
+  {
+    id: 'interest-rate',
+    label: '政策金利・長期金利',
+    component: shallowRef(InterestRateWidget),
+    visible: true,
+  },
 ])
 
 const columnOptions = [
