@@ -13,14 +13,12 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
-      # Copy OpenAPI spec for Orval code generation
-      - cp docs/openapi_main.yaml Frontend/docs/
-      - cd Frontend/finance-dashboard && npm ci
+      - cd finance-dashboard && npm ci
 
   pre_build:
     commands:
       # Lint + format check
-      - cd Frontend/finance-dashboard && npm run lint && npm run format:check
+      - cd finance-dashboard && npm run lint && npm run format:check
       # Resolve infrastructure exports (UC-2.3)
       - |
         S3_BUCKET=$(aws cloudformation list-exports \
@@ -53,12 +51,12 @@ phases:
 
   build:
     commands:
-      - cd Frontend/finance-dashboard && npm run build
+      - cd finance-dashboard && npm run build
 
   post_build:
     commands:
       # Deploy to S3
-      - aws s3 sync Frontend/finance-dashboard/dist "s3://${S3_BUCKET}" --delete --region ${CDK_DEFAULT_REGION}
+      - aws s3 sync finance-dashboard/dist "s3://${S3_BUCKET}" --delete --region ${CDK_DEFAULT_REGION}
       # Invalidate CloudFront cache
       - aws cloudfront create-invalidation --distribution-id "${DISTRIBUTION_ID}" --paths "/*"
       - echo "Frontend deployment completed."
