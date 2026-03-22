@@ -1,0 +1,64 @@
+version: 0.2
+
+# Required environment variables (injected by CI/CD unit - UC-2.4):
+#   ENV     - Environment identifier (dev, pro)
+#   PROJECT - Project identifier (fdp)
+
+env:
+  variables:
+    CDK_DEFAULT_REGION: "ap-northeast-1"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      # Copy OpenAPI spec for Orval code generation
+      - cp docs/openapi_main.yaml Frontend/docs/
+      - cd Frontend/finance-dashboard && npm ci
+
+  pre_build:
+    commands:
+      # Lint + format check
+      - cd Frontend/finance-dashboard && npm run lint && npm run format:check
+      # Resolve infrastructure exports (UC-2.3)
+      - |
+        S3_BUCKET=$(aws cloudformation list-exports \
+          --region ${CDK_DEFAULT_REGION} \
+          --query "Exports[?Name=='${PROJECT}-${ENV}-infra-S3BucketName'].Value" \
+          --output text)
+        DISTRIBUTION_ID=$(aws cloudformation list-exports \
+          --region ${CDK_DEFAULT_REGION} \
+          --query "Exports[?Name=='${PROJECT}-${ENV}-infra-CloudFrontDistributionId'].Value" \
+          --output text)
+        DOMAIN_NAME=$(aws cloudformation list-exports \
+          --region ${CDK_DEFAULT_REGION} \
+          --query "Exports[?Name=='${PROJECT}-${ENV}-infra-DomainName'].Value" \
+          --output text)
+        COGNITO_CLIENT_ID=$(aws cloudformation list-exports \
+          --region ${CDK_DEFAULT_REGION} \
+          --query "Exports[?Name=='${PROJECT}-${ENV}-infra-CognitoClientId'].Value" \
+          --output text)
+        COGNITO_DOMAIN=$(aws cloudformation list-exports \
+          --region ${CDK_DEFAULT_REGION} \
+          --query "Exports[?Name=='${PROJECT}-${ENV}-infra-CognitoDomain'].Value" \
+          --output text)
+      - echo "S3_BUCKET=${S3_BUCKET}"
+      - echo "DISTRIBUTION_ID=${DISTRIBUTION_ID}"
+      # Set Vite environment variables
+      - export VITE_COGNITO_DOMAIN="${COGNITO_DOMAIN}"
+      - export VITE_COGNITO_CLIENT_ID="${COGNITO_CLIENT_ID}"
+      - export VITE_COGNITO_REGION="${CDK_DEFAULT_REGION}"
+      - export VITE_REDIRECT_URI="https://${DOMAIN_NAME}/callback"
+
+  build:
+    commands:
+      - cd Frontend/finance-dashboard && npm run build
+
+  post_build:
+    commands:
+      # Deploy to S3
+      - aws s3 sync Frontend/finance-dashboard/dist "s3://${S3_BUCKET}" --delete --region ${CDK_DEFAULT_REGION}
+      # Invalidate CloudFront cache
+      - aws cloudfront create-invalidation --distribution-id "${DISTRIBUTION_ID}" --paths "/*"
+      - echo "Frontend deployment completed."
