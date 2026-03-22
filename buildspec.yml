@@ -13,12 +13,12 @@ phases:
     runtime-versions:
       nodejs: 22
     commands:
-      - cd finance-dashboard && npm ci
+      - cd finance-dashboard && npm ci && cd ..
 
   pre_build:
     commands:
       # Lint + format check
-      - cd finance-dashboard && npm run lint && npm run format:check
+      - cd finance-dashboard && npm run lint && npm run format:check && cd ..
       # Resolve infrastructure exports (UC-2.3)
       - |
         S3_BUCKET=$(aws cloudformation list-exports \
@@ -51,7 +51,7 @@ phases:
 
   build:
     commands:
-      - cd finance-dashboard && npm run build
+      - cd finance-dashboard && npm run build && cd ..
 
   post_build:
     commands:
