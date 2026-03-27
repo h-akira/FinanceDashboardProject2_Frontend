@@ -5,6 +5,7 @@
 ## 構成
 
 - `finance-dashboard/` - メインアプリケーション
+- `tests/` - E2E テスト（Playwright, Python）
 - `docs/` - OpenAPI 定義（親リポジトリの `docs/` からコピー）
 
 ## セットアップ
@@ -77,3 +78,21 @@ npm run format:check
 | `VITE_COGNITO_CLIENT_ID` | Cognito クライアント ID |
 | `VITE_COGNITO_REGION` | Cognito リージョン |
 | `VITE_REDIRECT_URI` | OAuth コールバック URI |
+
+## E2E テスト
+
+Playwright（Python）によるブラウザテスト。dev サーバーの MSW モック環境で動作する。
+
+```bash
+# セットアップ（初回のみ）
+cd Frontend/tests
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+python -m playwright install chromium
+
+# 実行（dev サーバー起動中に別ターミナルで）
+cd Frontend/tests
+source env/bin/activate
+python test_custom_chart.py
+```

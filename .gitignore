@@ -43,3 +43,6 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# E2E test venv
+tests/env/

@@ -3,6 +3,7 @@ import { useAuth } from '@/auth/auth'
 import HomePage from '@/pages/HomePage.vue'
 import CallbackPage from '@/pages/CallbackPage.vue'
 import DashboardPage from '@/pages/DashboardPage.vue'
+import CustomChartPage from '@/pages/CustomChartPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,6 +22,12 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/custom-chart',
+      name: 'custom-chart',
+      component: CustomChartPage,
       meta: { requiresAuth: true },
     },
     {

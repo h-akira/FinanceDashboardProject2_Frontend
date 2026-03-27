@@ -16,6 +16,11 @@ const menuItems = computed(() => {
       icon: 'pi pi-chart-bar',
       command: () => router.push('/dashboard'),
     },
+    {
+      label: 'カスタムチャート',
+      icon: 'pi pi-chart-line',
+      command: () => router.push('/custom-chart'),
+    },
   ]
 })
 
