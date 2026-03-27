@@ -96,7 +96,7 @@ export const customHandlers = [
     const series: CustomChartDataResponse['series'] = sourceIds
       .filter((id) => id in sourcesMap)
       .map((id) => {
-        const src = sourcesMap[id]
+        const src = sourcesMap[id]!
         return {
           id: src.id,
           name: src.name,
