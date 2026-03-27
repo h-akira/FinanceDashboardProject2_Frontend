@@ -16,15 +16,7 @@ import Tag from 'primevue/tag'
 import { getCustomChartSources, getCustomChartData } from '@/api/generated/main/finance/finance'
 import type { CustomChartSource } from '@/api/generated/main/model'
 
-const SERIES_COLORS = [
-  '#2962ff',
-  '#ff6d00',
-  '#2e7d32',
-  '#d50000',
-  '#6a1b9a',
-  '#00838f',
-  '#ef6c00',
-]
+const SERIES_COLORS = ['#2962ff', '#ff6d00', '#2e7d32', '#d50000', '#6a1b9a', '#00838f', '#ef6c00']
 
 interface SourceEntry {
   source: CustomChartSource
@@ -243,34 +235,23 @@ onBeforeUnmount(() => {
       <div class="controls">
         <div class="source-list">
           <div v-for="entry in sourceEntries" :key="entry.source.id" class="source-item">
-            <Checkbox
-              v-model="entry.checked"
-              :inputId="entry.source.id"
-              :binary="true"
-            />
+            <Checkbox v-model="entry.checked" :inputId="entry.source.id" :binary="true" />
             <label :for="entry.source.id">{{ entry.source.name }}</label>
             <Tag :value="entry.source.axis_label" severity="secondary" class="axis-tag" />
           </div>
         </div>
-        <Button
-          label="反映"
-          icon="pi pi-check"
-          :loading="loading"
-          @click="handleApply"
-        />
+        <Button label="反映" icon="pi pi-check" :loading="loading" @click="handleApply" />
       </div>
 
-      <Message v-if="warningMessage" severity="warn" :closable="false">{{ warningMessage }}</Message>
+      <Message v-if="warningMessage" severity="warn" :closable="false">{{
+        warningMessage
+      }}</Message>
       <Message v-if="errorMessage" severity="error" :closable="false">{{ errorMessage }}</Message>
 
       <div ref="chartContainer" class="chart-container"></div>
 
       <div v-if="renderedSources.length > 0" class="legend">
-        <div
-          v-for="(s, i) in renderedSources"
-          :key="s.id"
-          class="legend-item"
-        >
+        <div v-for="(s, i) in renderedSources" :key="s.id" class="legend-item">
           <span
             class="legend-color"
             :style="{ background: SERIES_COLORS[i % SERIES_COLORS.length] }"

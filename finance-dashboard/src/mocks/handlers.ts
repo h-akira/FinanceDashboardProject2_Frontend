@@ -34,7 +34,12 @@ function generateInterestRateData(): InterestRateResponse {
 
 const customChartSources: CustomChartSourcesResponse = {
   sources: [
-    { id: 'target_rate', name: '政策金利 (FF金利誘導目標上限)', axis_group: 'rate_pct1', axis_label: '%' },
+    {
+      id: 'target_rate',
+      name: '政策金利 (FF金利誘導目標上限)',
+      axis_group: 'rate_pct1',
+      axis_label: '%',
+    },
     { id: 'dgs10', name: '米国10年国債利回り', axis_group: 'rate_pct1', axis_label: '%' },
     { id: 'baa10y', name: 'Baa社債スプレッド', axis_group: 'rate_pct1', axis_label: '%' },
     { id: 'sp500', name: 'S&P 500', axis_group: 'price_usd1', axis_label: 'USD' },
@@ -52,7 +57,10 @@ function generateSeriesData(id: string, baseValue: number, variance: number) {
       if (year === 2025 && month > 6) break
       for (const day of [1, 15]) {
         const time = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-        data.push({ time, value: Math.round((baseValue + (Math.random() - 0.5) * variance) * 100) / 100 })
+        data.push({
+          time,
+          value: Math.round((baseValue + (Math.random() - 0.5) * variance) * 100) / 100,
+        })
       }
     }
   }
