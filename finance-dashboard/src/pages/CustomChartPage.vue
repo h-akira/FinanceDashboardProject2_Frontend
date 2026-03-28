@@ -14,7 +14,10 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Message from 'primevue/message'
 import Tag from 'primevue/tag'
 import { getCustomChartSources, getCustomChartData } from '@/api/generated/main/finance/finance'
-import type { CustomChartSource } from '@/api/generated/main/model'
+import type {
+  CustomChartSource,
+  CustomChartSourcesResponseAxisGroups,
+} from '@/api/generated/main/model'
 
 const SERIES_COLORS = ['#2962ff', '#ff6d00', '#2e7d32', '#d50000', '#6a1b9a', '#00838f', '#ef6c00']
 
@@ -23,8 +26,16 @@ interface SourceEntry {
   checked: boolean
 }
 
+interface SourceGroup {
+  key: string
+  displayName: string
+  entries: SourceEntry[]
+}
+
 const chartContainer = ref<HTMLDivElement | null>(null)
 const sourceEntries = ref<SourceEntry[]>([])
+const axisGroups = ref<CustomChartSourcesResponseAxisGroups>({})
+const otherDisplayName = ref('その他')
 const maxAxes = ref(2)
 const loading = ref(false)
 const sourcesLoading = ref(false)
@@ -39,8 +50,47 @@ const selectedSources = computed(() =>
   sourceEntries.value.filter((e) => e.checked).map((e) => e.source),
 )
 
-const selectedAxisGroups = computed(() => {
-  const groups = new Set(selectedSources.value.map((s) => s.axis_group))
+const selectedAxisCount = computed(() => {
+  const selected = selectedSources.value
+  const normalGroups = new Set(
+    selected.filter((s) => s.axis_group !== 'other').map((s) => s.axis_group),
+  )
+  const otherCount = selected.filter((s) => s.axis_group === 'other').length
+  return normalGroups.size + otherCount
+})
+
+const groupedSources = computed((): SourceGroup[] => {
+  const groups: SourceGroup[] = []
+  const entriesByGroup: Record<string, SourceEntry[]> = {}
+
+  for (const entry of sourceEntries.value) {
+    const group = entry.source.axis_group
+    if (!entriesByGroup[group]) {
+      entriesByGroup[group] = []
+    }
+    entriesByGroup[group].push(entry)
+  }
+
+  // Normal groups in axis_groups key order
+  for (const [key, groupDef] of Object.entries(axisGroups.value)) {
+    if (entriesByGroup[key]) {
+      groups.push({
+        key,
+        displayName: groupDef.display_name,
+        entries: entriesByGroup[key],
+      })
+    }
+  }
+
+  // "Other" group at the end
+  if (entriesByGroup['other']) {
+    groups.push({
+      key: 'other',
+      displayName: otherDisplayName.value,
+      entries: entriesByGroup['other'],
+    })
+  }
+
   return groups
 })
 
@@ -95,8 +145,10 @@ async function fetchSources() {
     if (res.status === 200) {
       sourceEntries.value = res.data.sources.map((s) => ({
         source: s,
-        checked: false,
+        checked: s.default,
       }))
+      axisGroups.value = res.data.axis_groups
+      otherDisplayName.value = res.data.other_display_name
       maxAxes.value = res.data.max_axes
     } else {
       errorMessage.value = 'ソース一覧の取得に失敗しました'
@@ -107,6 +159,12 @@ async function fetchSources() {
     sourcesLoading.value = false
     await nextTick()
     initChart()
+
+    // Auto-apply if there are default sources
+    const hasDefaults = sourceEntries.value.some((e) => e.checked)
+    if (hasDefaults) {
+      await handleApply()
+    }
   }
 }
 
@@ -121,9 +179,8 @@ async function handleApply() {
     return
   }
 
-  // Check axis group count
-  const axisGroups = selectedAxisGroups.value
-  if (axisGroups.size > maxAxes.value) {
+  // Check axis count
+  if (selectedAxisCount.value > maxAxes.value) {
     warningMessage.value = `Y軸は最大${maxAxes.value}種類までです。選択を見直してください。`
     return
   }
@@ -232,22 +289,6 @@ onBeforeUnmount(() => {
     </div>
 
     <template v-else>
-      <div class="controls">
-        <div class="source-list">
-          <div v-for="entry in sourceEntries" :key="entry.source.id" class="source-item">
-            <Checkbox v-model="entry.checked" :inputId="entry.source.id" :binary="true" />
-            <label :for="entry.source.id">{{ entry.source.name }}</label>
-            <Tag :value="entry.source.axis_label" severity="secondary" class="axis-tag" />
-          </div>
-        </div>
-        <Button label="反映" icon="pi pi-check" :loading="loading" @click="handleApply" />
-      </div>
-
-      <Message v-if="warningMessage" severity="warn" :closable="false">{{
-        warningMessage
-      }}</Message>
-      <Message v-if="errorMessage" severity="error" :closable="false">{{ errorMessage }}</Message>
-
       <div ref="chartContainer" class="chart-container"></div>
 
       <div v-if="renderedSources.length > 0" class="legend">
@@ -258,6 +299,27 @@ onBeforeUnmount(() => {
           ></span>
           <span>{{ s.name }} ({{ s.axis_label }})</span>
         </div>
+      </div>
+
+      <Message v-if="warningMessage" severity="warn" :closable="false">{{
+        warningMessage
+      }}</Message>
+      <Message v-if="errorMessage" severity="error" :closable="false">{{ errorMessage }}</Message>
+
+      <div class="controls">
+        <div class="source-groups">
+          <div v-for="group in groupedSources" :key="group.key" class="source-group">
+            <div class="source-group-header">{{ group.displayName }}</div>
+            <div class="source-group-items">
+              <div v-for="entry in group.entries" :key="entry.source.id" class="source-item">
+                <Checkbox v-model="entry.checked" :inputId="entry.source.id" :binary="true" />
+                <label :for="entry.source.id">{{ entry.source.name }}</label>
+                <Tag :value="entry.source.axis_label" severity="secondary" class="axis-tag" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <Button label="反映" icon="pi pi-check" :loading="loading" @click="handleApply" />
       </div>
     </template>
   </div>
@@ -276,36 +338,6 @@ h1 {
   display: flex;
   justify-content: center;
   padding: 2rem;
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.source-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  flex: 1;
-}
-
-.source-item {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.source-item label {
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.axis-tag {
-  font-size: 0.7rem;
 }
 
 .chart-container {
@@ -333,5 +365,55 @@ h1 {
   width: 16px;
   height: 3px;
   border-radius: 2px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.source-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.source-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.source-group-header {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--p-text-muted-color, #6b7280);
+  white-space: nowrap;
+  min-width: 6rem;
+}
+
+.source-group-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.source-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.source-item label {
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.axis-tag {
+  font-size: 0.7rem;
 }
 </style>

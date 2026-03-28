@@ -46,3 +46,6 @@ __screenshots__/
 
 # E2E test venv
 tests/env/
+
+# tmp
+tmp/
