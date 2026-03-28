@@ -39,6 +39,7 @@ const customChartSources: CustomChartSourcesResponse = {
       name: '政策金利 (FF金利誘導目標上限)',
       axis_group: 'rate_pct1',
       axis_label: '%',
+      local_group: 'us',
       default: true,
     },
     {
@@ -46,6 +47,7 @@ const customChartSources: CustomChartSourcesResponse = {
       name: '米国10年国債利回り',
       axis_group: 'rate_pct1',
       axis_label: '%',
+      local_group: 'us',
       default: true,
     },
     {
@@ -53,14 +55,23 @@ const customChartSources: CustomChartSourcesResponse = {
       name: '米国Baa社債スプレッド',
       axis_group: 'rate_pct1',
       axis_label: '%',
+      local_group: 'us',
       default: false,
     },
-    { id: 'sp500', name: 'S&P 500', axis_group: 'price_usd1', axis_label: 'USD', default: false },
+    {
+      id: 'sp500',
+      name: 'S&P 500',
+      axis_group: 'independent1',
+      axis_label: 'USD',
+      local_group: 'stock_index',
+      default: false,
+    },
     {
       id: 'sp500_yoy',
       name: 'S&P 500 前年比',
       axis_group: 'ratio1',
       axis_label: '倍率',
+      local_group: 'stock_index',
       default: false,
     },
     {
@@ -73,18 +84,39 @@ const customChartSources: CustomChartSourcesResponse = {
     {
       id: 'score',
       name: '投資環境スコア（堀井）',
-      axis_group: 'other',
+      axis_group: 'independent1',
       axis_label: 'スコア',
+      local_group: 'investment_env',
       default: false,
     },
   ],
   axis_groups: {
-    rate_pct1: { label: '%', display_name: '金利・スプレッド' },
-    price_usd1: { label: 'USD', display_name: '米国株価指数' },
-    ratio1: { label: '倍率', display_name: '前年比' },
-    index1: { label: '指数', display_name: '通貨指数' },
+    rate_pct1: {
+      label: '%',
+      display_name: '金利・スプレッド',
+      independent: false,
+      local_groups: { us: { display_name: '米国' } },
+    },
+    ratio1: {
+      label: '倍率',
+      display_name: '前年比',
+      independent: false,
+      local_groups: { stock_index: { display_name: '株価指数' } },
+    },
+    index1: {
+      label: '指数',
+      display_name: '通貨指数',
+      independent: false,
+    },
+    independent1: {
+      display_name: '独立軸',
+      independent: true,
+      local_groups: {
+        stock_index: { display_name: '株価指数' },
+        investment_env: { display_name: '投資環境' },
+      },
+    },
   },
-  other_display_name: 'その他',
   max_axes: 2,
 }
 

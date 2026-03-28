@@ -26,16 +26,23 @@ interface SourceEntry {
   checked: boolean
 }
 
-interface SourceGroup {
+interface SubGroup {
   key: string
   displayName: string
   entries: SourceEntry[]
 }
 
+interface SourceGroup {
+  key: string
+  displayName: string
+  independent: boolean
+  entries: SourceEntry[]
+  subGroups?: SubGroup[]
+}
+
 const chartContainer = ref<HTMLDivElement | null>(null)
 const sourceEntries = ref<SourceEntry[]>([])
 const axisGroups = ref<CustomChartSourcesResponseAxisGroups>({})
-const otherDisplayName = ref('その他')
 const maxAxes = ref(2)
 const loading = ref(false)
 const sourcesLoading = ref(false)
@@ -53,10 +60,12 @@ const selectedSources = computed(() =>
 const selectedAxisCount = computed(() => {
   const selected = selectedSources.value
   const normalGroups = new Set(
-    selected.filter((s) => s.axis_group !== 'other').map((s) => s.axis_group),
+    selected.filter((s) => !axisGroups.value[s.axis_group]?.independent).map((s) => s.axis_group),
   )
-  const otherCount = selected.filter((s) => s.axis_group === 'other').length
-  return normalGroups.size + otherCount
+  const independentCount = selected.filter(
+    (s) => axisGroups.value[s.axis_group]?.independent,
+  ).length
+  return normalGroups.size + independentCount
 })
 
 const groupedSources = computed((): SourceGroup[] => {
@@ -71,23 +80,44 @@ const groupedSources = computed((): SourceGroup[] => {
     entriesByGroup[group].push(entry)
   }
 
-  // Normal groups in axis_groups key order
   for (const [key, groupDef] of Object.entries(axisGroups.value)) {
-    if (entriesByGroup[key]) {
-      groups.push({
-        key,
-        displayName: groupDef.display_name,
-        entries: entriesByGroup[key],
-      })
-    }
-  }
+    if (!entriesByGroup[key]) continue
 
-  // "Other" group at the end
-  if (entriesByGroup['other']) {
+    const localGroupsDef = groupDef.local_groups ?? {}
+    const subGroupMap: Record<string, SourceEntry[]> = {}
+    const ungrouped: SourceEntry[] = []
+
+    for (const entry of entriesByGroup[key]) {
+      const lgKey = entry.source.local_group
+      if (lgKey && localGroupsDef[lgKey]) {
+        if (!subGroupMap[lgKey]) subGroupMap[lgKey] = []
+        subGroupMap[lgKey].push(entry)
+      } else {
+        ungrouped.push(entry)
+      }
+    }
+
+    const subGroups: SubGroup[] = []
+    for (const [lgKey, lgDef] of Object.entries(localGroupsDef)) {
+      if (subGroupMap[lgKey]) {
+        subGroups.push({
+          key: lgKey,
+          displayName: lgDef.display_name,
+          entries: subGroupMap[lgKey],
+        })
+      }
+    }
+
+    const displayName = groupDef.independent
+      ? groupDef.display_name
+      : `${groupDef.display_name}（${groupDef.label}）`
+
     groups.push({
-      key: 'other',
-      displayName: otherDisplayName.value,
-      entries: entriesByGroup['other'],
+      key,
+      displayName,
+      independent: groupDef.independent,
+      entries: ungrouped,
+      subGroups: subGroups.length > 0 ? subGroups : undefined,
     })
   }
 
@@ -148,7 +178,6 @@ async function fetchSources() {
         checked: s.default,
       }))
       axisGroups.value = res.data.axis_groups
-      otherDisplayName.value = res.data.other_display_name
       maxAxes.value = res.data.max_axes
     } else {
       errorMessage.value = 'ソース一覧の取得に失敗しました'
@@ -308,16 +337,42 @@ onBeforeUnmount(() => {
 
       <div class="controls">
         <div class="source-groups">
-          <div v-for="group in groupedSources" :key="group.key" class="source-group">
-            <div class="source-group-header">{{ group.displayName }}</div>
-            <div class="source-group-items">
-              <div v-for="entry in group.entries" :key="entry.source.id" class="source-item">
-                <Checkbox v-model="entry.checked" :inputId="entry.source.id" :binary="true" />
-                <label :for="entry.source.id">{{ entry.source.name }}</label>
-                <Tag :value="entry.source.axis_label" severity="secondary" class="axis-tag" />
+          <template v-for="group in groupedSources" :key="group.key">
+            <div class="source-group" :class="{ 'source-group--has-subgroups': group.subGroups }">
+              <div class="source-group-header">{{ group.displayName }}</div>
+              <div class="source-group-body">
+                <!-- Ungrouped sources (no local_group) -->
+                <div v-if="group.entries.length > 0" class="source-group-items">
+                  <div v-for="entry in group.entries" :key="entry.source.id" class="source-item">
+                    <Checkbox v-model="entry.checked" :inputId="entry.source.id" :binary="true" />
+                    <label :for="entry.source.id">{{ entry.source.name }}</label>
+                    <Tag
+                      v-if="group.independent"
+                      :value="entry.source.axis_label"
+                      severity="secondary"
+                      class="axis-tag"
+                    />
+                  </div>
+                </div>
+                <!-- Subgroups (local_groups) -->
+                <div v-for="sub in group.subGroups" :key="sub.key" class="subgroup">
+                  <div class="subgroup-header">{{ sub.displayName }}</div>
+                  <div class="source-group-items">
+                    <div v-for="entry in sub.entries" :key="entry.source.id" class="source-item">
+                      <Checkbox v-model="entry.checked" :inputId="entry.source.id" :binary="true" />
+                      <label :for="entry.source.id">{{ entry.source.name }}</label>
+                      <Tag
+                        v-if="group.independent"
+                        :value="entry.source.axis_label"
+                        severity="secondary"
+                        class="axis-tag"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          </template>
         </div>
         <Button label="反映" icon="pi pi-check" :loading="loading" @click="handleApply" />
       </div>
@@ -388,12 +443,37 @@ h1 {
   gap: 0.75rem;
 }
 
+.source-group--has-subgroups {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .source-group-header {
   font-size: 0.8rem;
   font-weight: bold;
   color: var(--p-text-muted-color, #6b7280);
   white-space: nowrap;
   min-width: 6rem;
+}
+
+.source-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.subgroup {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.subgroup-header {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color, #6b7280);
+  white-space: nowrap;
+  min-width: 5.5rem;
 }
 
 .source-group-items {

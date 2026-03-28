@@ -61,13 +61,29 @@ def run():
 
         # --- ENH-002 F2: グループ化表示 ---
         print("ENH-002 F2: グループ化表示")
-        headers = page.locator(".source-group-header")
-        header_count = headers.count()
-        check("5つのグループヘッダーが表示される", header_count == 5)
-        first_header = headers.nth(0).text_content() or ""
-        check("最初のグループは「金利・スプレッド」", "金利・スプレッド" in first_header)
-        last_header = headers.nth(header_count - 1).text_content() or ""
-        check("最後のグループは「その他」", "その他" in last_header)
+        group_headers = page.locator(".source-group-header")
+        group_header_count = group_headers.count()
+        check("4つのグループヘッダーが表示される", group_header_count == 4)
+        first_header = group_headers.nth(0).text_content() or ""
+        check("最初のグループは「金利・スプレッド（%）」", "金利・スプレッド（%）" in first_header)
+        last_header = group_headers.nth(group_header_count - 1).text_content() or ""
+        check("最後のグループは「独立軸」", "独立軸" in last_header)
+
+        # --- ENH-003/004: 通常グループのソースに単位Tagがない ---
+        print("ENH-003/004: 通常グループの単位表示簡素化")
+        # Count axis-tags in all groups; only independent groups should have them
+        all_tags = page.locator(".axis-tag")
+        check("単位Tagは独立軸ソースのみ (2つ)", all_tags.count() == 2)
+
+        # --- ENH-003/004: サブグループ表示 ---
+        print("ENH-003/004: サブグループ表示")
+        sub_headers = page.locator(".subgroup-header")
+        sub_count = sub_headers.count()
+        check("サブグループヘッダーが4つある", sub_count == 4)
+        sub_header_texts = [sub_headers.nth(i).text_content() or "" for i in range(sub_count)]
+        check("サブグループに「米国」がある", any("米国" in t for t in sub_header_texts))
+        check("サブグループに「株価指数」がある", any("株価指数" in t for t in sub_header_texts))
+        check("サブグループに「投資環境」がある", any("投資環境" in t for t in sub_header_texts))
 
         # --- ENH-002 F1: デフォルト選択＋自動描画 ---
         print("ENH-002 F1: デフォルト選択＋自動描画")
@@ -101,7 +117,7 @@ def run():
         # Select target_rate and sp500
         items.nth(0).locator("label").click()
         page.wait_for_timeout(100)
-        items.nth(3).locator("label").click()  # S&P 500 (different axis group)
+        items.nth(5).locator("label").click()  # S&P 500 (independent axis)
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(2000)
@@ -110,7 +126,7 @@ def run():
 
         # --- F4: 軸グループ3種以上で警告 ---
         print("F4: 軸グループ3種以上で警告")
-        items.nth(4).locator("label").click()  # S&P 500 YoY (3rd axis group)
+        items.nth(3).locator("label").click()  # S&P 500 YoY (ratio1, 3rd axis)
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(1000)
@@ -126,7 +142,7 @@ def run():
 
         # --- BUG-002: 凡例は反映ボタン押下時のみ更新 ---
         print("BUG-002: 凡例は反映ボタン押下時のみ更新")
-        items.nth(4).locator("label").click()  # uncheck
+        items.nth(3).locator("label").click()  # uncheck sp500_yoy
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(2000)
@@ -155,8 +171,8 @@ def run():
         check("通常1グループ + other1つ = 2軸で描画される", page.locator(".legend-item").count() == 2)
 
         # --- ENH-002 F8: 独立軸ソース + 通常2グループ = 3軸で警告 ---
-        print("ENH-002 F8: 軸数超過 (other + 通常2グループ)")
-        items.nth(3).locator("label").click()  # sp500 (price_usd1)
+        print("ENH-002 F8: 軸数超過 (other + 通常グループ追加)")
+        items.nth(3).locator("label").click()  # sp500_yoy (ratio1)
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(1000)
