@@ -57,7 +57,7 @@ def run():
         print("F1: ソース一覧表示")
         items = page.locator(".source-item")
         count = items.count()
-        check("7つのソースが表示される", count == 7)
+        check("9つのソースが表示される", count == 9)
 
         # --- ENH-002 F2: グループ化表示 ---
         print("ENH-002 F2: グループ化表示")
@@ -79,9 +79,10 @@ def run():
         print("ENH-003/004: サブグループ表示")
         sub_headers = page.locator(".subgroup-header")
         sub_count = sub_headers.count()
-        check("サブグループヘッダーが4つある", sub_count == 4)
+        check("サブグループヘッダーが5つある", sub_count == 5)
         sub_header_texts = [sub_headers.nth(i).text_content() or "" for i in range(sub_count)]
         check("サブグループに「米国」がある", any("米国" in t for t in sub_header_texts))
+        check("サブグループに「欧州」がある", any("欧州" in t for t in sub_header_texts))
         check("サブグループに「株価指数」がある", any("株価指数" in t for t in sub_header_texts))
         check("サブグループに「投資環境」がある", any("投資環境" in t for t in sub_header_texts))
 
@@ -117,7 +118,7 @@ def run():
         # Select target_rate and sp500
         items.nth(0).locator("label").click()
         page.wait_for_timeout(100)
-        items.nth(5).locator("label").click()  # S&P 500 (independent axis)
+        items.nth(7).locator("label").click()  # S&P 500 (independent axis)
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(2000)
@@ -126,7 +127,7 @@ def run():
 
         # --- F4: 軸グループ3種以上で警告 ---
         print("F4: 軸グループ3種以上で警告")
-        items.nth(3).locator("label").click()  # S&P 500 YoY (ratio1, 3rd axis)
+        items.nth(5).locator("label").click()  # S&P 500 YoY (ratio1, 3rd axis)
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(1000)
@@ -142,7 +143,7 @@ def run():
 
         # --- BUG-002: 凡例は反映ボタン押下時のみ更新 ---
         print("BUG-002: 凡例は反映ボタン押下時のみ更新")
-        items.nth(3).locator("label").click()  # uncheck sp500_yoy
+        items.nth(5).locator("label").click()  # uncheck sp500_yoy
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(2000)
@@ -164,7 +165,7 @@ def run():
         # Select target_rate (rate_pct1) + score (other)
         items.nth(0).locator("label").click()
         page.wait_for_timeout(100)
-        items.nth(6).locator("label").click()  # score (other)
+        items.nth(8).locator("label").click()  # score (other)
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(2000)
@@ -172,7 +173,7 @@ def run():
 
         # --- ENH-002 F8: 独立軸ソース + 通常2グループ = 3軸で警告 ---
         print("ENH-002 F8: 軸数超過 (other + 通常グループ追加)")
-        items.nth(3).locator("label").click()  # sp500_yoy (ratio1)
+        items.nth(5).locator("label").click()  # sp500_yoy (ratio1)
         page.wait_for_timeout(100)
         page.locator('button:has-text("反映")').click()
         page.wait_for_timeout(1000)

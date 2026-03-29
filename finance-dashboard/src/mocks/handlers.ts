@@ -89,13 +89,29 @@ const customChartSources: CustomChartSourcesResponse = {
       local_group: 'investment_env',
       default: false,
     },
+    {
+      id: 'ecb_mro_rate',
+      name: 'ECB政策金利 (主要リファイナンス金利)',
+      axis_group: 'rate_pct1',
+      axis_label: '%',
+      local_group: 'eu',
+      default: false,
+    },
+    {
+      id: 'de_10y',
+      name: 'ドイツ10年国債利回り',
+      axis_group: 'rate_pct1',
+      axis_label: '%',
+      local_group: 'eu',
+      default: false,
+    },
   ],
   axis_groups: {
     rate_pct1: {
       label: '%',
       display_name: '金利・スプレッド',
       independent: false,
-      local_groups: { us: { display_name: '米国' } },
+      local_groups: { us: { display_name: '米国' }, eu: { display_name: '欧州' } },
     },
     ratio1: {
       label: '倍率',
@@ -145,6 +161,8 @@ const seriesGenerators: Record<string, () => { time: string; value: number }[]> 
   sp500_yoy: () => generateSeriesData('sp500_yoy', 1.1, 0.4),
   dtwexbgs: () => generateSeriesData('dtwexbgs', 110, 20),
   score: () => generateSeriesData('score', 0, 10),
+  ecb_mro_rate: () => generateSeriesData('ecb_mro_rate', 2.5, 3.0),
+  de_10y: () => generateSeriesData('de_10y', 2.0, 2.5),
 }
 
 export const customHandlers = [
