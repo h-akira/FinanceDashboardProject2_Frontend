@@ -2,6 +2,8 @@
 
 金融ダッシュボードアプリのフロントエンド。Vue 3 SPA。
 
+> **Note**: 本リポジトリは[親リポジトリ（FinanceDashboardProject2）](https://github.com/h-akira/FinenceDashboardProject2)の Git サブモジュールとして管理されている。AI エージェントは親リポジトリのルートから起動する前提で構成されており、`.dir.md` 等のパス表記も親リポジトリ基準となっている。
+
 ## 構成
 
 - `finance-dashboard/` - メインアプリケーション
