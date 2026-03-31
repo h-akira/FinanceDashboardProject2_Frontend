@@ -13,6 +13,7 @@
 | `/` | home | HomePage | ✗ | 即時 | - |
 | `/callback` | callback | CallbackPage | ✗ | 即時 | US-1.1 |
 | `/dashboard` | dashboard | DashboardPage | ✓ | 即時 | US-3.1, 3.2, 4.x, 5.1, 6.1 |
+| `/custom-chart` | custom-chart | CustomChartPage | ✓ | 即時 | - |
 | `/profile` | profile | ProfilePage | ✓ | 遅延 | US-2.1 |
 | `/change-password` | change-password | ChangePasswordPage | ✓ | 遅延 | US-1.3 |
 | `/delete-account` | delete-account | DeleteAccountPage | ✓ | 遅延 | US-2.2 |
