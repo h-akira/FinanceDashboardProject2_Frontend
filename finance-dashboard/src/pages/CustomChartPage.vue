@@ -243,33 +243,39 @@ function renderChart(
   if (!chart) return
   clearChart()
 
-  // Determine axis assignment
-  const uniqueGroups = [...new Set(series.map((s) => s.axis_group))]
+  // Determine axis assignment.
+  // Independent groups (independent: true) consume one axis per source,
+  // so use the source id as the axis key. Normal groups share one axis per axis_group.
+  const axisKeyOf = (s: { id: string; axis_group: string }) =>
+    axisGroups.value[s.axis_group]?.independent ? s.id : s.axis_group
+
+  const uniqueAxisKeys: string[] = []
   const groupToScale: Record<string, 'right' | 'left'> = {}
   const groupToLabel: Record<string, string> = {}
 
-  uniqueGroups.forEach((group, i) => {
-    groupToScale[group] = i === 0 ? 'right' : 'left'
-    const matchingSeries = series.find((s) => s.axis_group === group)
-    if (matchingSeries) {
-      groupToLabel[group] = matchingSeries.axis_label
+  for (const s of series) {
+    const key = axisKeyOf(s)
+    if (!uniqueAxisKeys.includes(key)) {
+      uniqueAxisKeys.push(key)
+      groupToScale[key] = uniqueAxisKeys.length === 1 ? 'right' : 'left'
+      groupToLabel[key] = s.axis_label
     }
-  })
+  }
 
   // Enable the needed price scales
   chart.applyOptions({
     rightPriceScale: {
-      visible: uniqueGroups.length >= 1,
+      visible: uniqueAxisKeys.length >= 1,
       borderColor: '#d1d4dc',
     },
     leftPriceScale: {
-      visible: uniqueGroups.length >= 2,
+      visible: uniqueAxisKeys.length >= 2,
       borderColor: '#d1d4dc',
     },
   })
 
   series.forEach((s, i) => {
-    const scale = groupToScale[s.axis_group]
+    const scale = groupToScale[axisKeyOf(s)]
     const color = SERIES_COLORS[i % SERIES_COLORS.length]
 
     const lineSeries = chart!.addSeries(LineSeries, {
